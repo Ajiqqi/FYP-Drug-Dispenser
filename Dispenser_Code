@@ -11,19 +11,22 @@
 // -------------------------------------------
 // WIFI + MQTT SETTINGS
 // -------------------------------------------
-const char* WIFI_SSID = "RAH 16-11";
-const char* WIFI_PASS = "aA@52223122596";
 
-const char* MQTT_BROKER = "3fa72b5859424931862626cce0f36321.s1.eu.hivemq.cloud";
-const int   MQTT_PORT   = 8883;  
+// Insert your WiFi credentials below
+const char* WIFI_SSID = "YOUR_WIFI_SSID";
+const char* WIFI_PASS = "YOUR_WIFI_PASSWORD";
 
-const char* MQTT_USER = "caretaker";
-const char* MQTT_PASS = "Caretaker123";
+// Insert your MQTT broker settings below
+const char* MQTT_BROKER = "YOUR_MQTT_BROKER_URL";
+const int   MQTT_PORT   = 8883;  // Change if needed
+const char* MQTT_USER = "YOUR_MQTT_USERNAME";
+const char* MQTT_PASS = "YOUR_MQTT_PASSWORD";
 
 // TOPICS
-const char* TOPIC_ALERT       = "dispenser/1/alerts";        // ESP32 → AI
-const char* TOPIC_AI_RESULT   = "dispenser/1/ai_result";     // AI → ESP32
-const char* TOPIC_SET_TIME    = "dispenser/1/set_time";      // Dashboard → ESP32
+// Insert your MQTT topics below (customize as needed)
+const char* TOPIC_ALERT       = "YOUR_TOPIC_ALERT";        // ESP32 → AI
+const char* TOPIC_AI_RESULT   = "YOUR_TOPIC_AI_RESULT";    // AI → ESP32
+const char* TOPIC_SET_TIME    = "YOUR_TOPIC_SET_TIME";     // Dashboard → ESP32
 
 WiFiClientSecure wifiClient;    
 PubSubClient mqttClient(wifiClient);
@@ -88,7 +91,7 @@ bool aiTriggeredByTimer = false;
 bool homingPending = false;
 unsigned long homingStartTime = 0;
 
-const unsigned long HOME_DELAY_MS = 7000; // 3 seconds grace
+const unsigned long HOME_DELAY_MS = 7000; // 7 seconds grace
 unsigned long lastIntervalTime = 0;
 
 // -------------------------------------------
@@ -138,14 +141,14 @@ void checkRefillStatus() {
   }
   if (dispensedCount >= (MED_SLOTS - 2) && dispensedCount < MED_SLOTS) {
     mqttClient.publish(
-      "dispenser/1/alerts",
+      TOPIC_ALERT,
       "REFILL_SOON"
     );
   }
 
   if (dispensedCount == MED_SLOTS) {
     mqttClient.publish(
-      "dispenser/1/alerts",
+      TOPIC_ALERT,
       "REFILL_REQUIRED"
     );
   }
@@ -166,98 +169,108 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("]: ");
   Serial.println(msg);
 
+
   // ===== FORCE DISPENSE (RECOVERY ONLY) =====
-if (String(topic) == "dispenser/1/manual" && msg == "FORCE_DISPENSE") {
-  Serial.println("FORCE DISPENSE REQUESTED");
+  if (String(topic) == "YOUR_TOPIC_MANUAL" && msg == "FORCE_DISPENSE") {
+    Serial.println("FORCE DISPENSE REQUESTED");
 
-  if (motorMoving && stepper.distanceToGo() != 0) {
-    Serial.println("FORCE DISPENSE: Resuming motor");
-    // AccelStepper continues automatically via stepper.run()
-  } else {
-    Serial.println("FORCE DISPENSE IGNORED: Motor not stalled");
-  }
-  return;
-}
-
-  // ===== PRESENCE CHECK ONLY =====
-if (String(topic) == TOPIC_ALERT && msg == "PRESENCE_CHECK") {
-  Serial.println("Presence check triggered");
-
-  // Ask AI to scan, no alarm, no motor
-  mqttClient.publish("dispenser/1/status", "PRESENCE_CHECK_TRIGGERED");
-  mqttClient.publish(TOPIC_ALERT, "CHECK_PRESENCE");
-  return;
-}
-
-  // ===== AI RESULT HANDLER =====
-if (String(topic) == TOPIC_AI_RESULT) {
-
-  Serial.print("AI Result: ");
-  Serial.println(msg);
-  digitalWrite(BUZZER_PIN, LOW);
-  alarmActive = false;
-  
-   // --- TIMER PATH ---
-  if (aiTriggeredByTimer) {
-
-    aiTriggeredByTimer = false;   // reset immediately
-
-    if (msg == "PRESENT") {
-      Serial.println("Timer + AI PRESENT → DISPENSING");
-      
-      stepper.move(STEPS_PER_SLOT);
-      motorMoving = true;
-      physicalSlotIndex++;
-      mqttClient.publish("dispenser/1/status",("DISPENSED," + String(currentSlot)).c_str());
-      dispensedCount++;
-
-      if (!cycleCompleted && (dispensedCount + missedCount >= MED_SLOTS)) {
-      cycleCompleted = true;
-      }
+    if (motorMoving && stepper.distanceToGo() != 0) {
+      Serial.println("FORCE DISPENSE: Resuming motor");
+      // AccelStepper continues automatically via stepper.run()
     } else {
-      Serial.println("Timer + AI NOT PRESENT → MISSED");
-      mqttClient.publish("dispenser/1/status",("MISSED," + String(currentSlot)).c_str());
-      missedCount++;
-      if (!cycleCompleted && (dispensedCount + missedCount >= MED_SLOTS)) {
-      cycleCompleted = true;
-}
+      Serial.println("FORCE DISPENSE IGNORED: Motor not stalled");
     }
     return;
   }
 
-  // Send log only, no motor, no buzzer
-  String logMsg = "PRESENCE_" + msg;
-  mqttClient.publish("dispenser/1/status", logMsg.c_str());
 
-  return;
-}
+  // ===== PRESENCE CHECK ONLY =====
+  if (String(topic) == TOPIC_ALERT && msg == "PRESENCE_CHECK") {
+    Serial.println("Presence check triggered");
+
+    // Ask AI to scan, no alarm, no motor
+    mqttClient.publish("YOUR_TOPIC_STATUS", "PRESENCE_CHECK_TRIGGERED");
+    mqttClient.publish(TOPIC_ALERT, "CHECK_PRESENCE");
+    return;
+  }
+
+
+  // ===== AI RESULT HANDLER =====
+  if (String(topic) == TOPIC_AI_RESULT) {
+
+    Serial.print("AI Result: ");
+    Serial.println(msg);
+    digitalWrite(BUZZER_PIN, LOW);
+    alarmActive = false;
+    
+    // --- TIMER PATH ---
+    if (aiTriggeredByTimer) {
+
+      aiTriggeredByTimer = false;   // reset immediately
+
+      if (msg == "PRESENT") {
+        Serial.println("Timer + AI PRESENT → DISPENSING");
+        
+        stepper.move(STEPS_PER_SLOT);
+        motorMoving = true;
+        physicalSlotIndex++;
+        mqttClient.publish("YOUR_TOPIC_STATUS", ("DISPENSED," + String(currentSlot)).c_str());
+        dispensedCount++;
+
+        if (!cycleCompleted && (dispensedCount + missedCount >= MED_SLOTS)) {
+          cycleCompleted = true;
+        }
+      } else {
+        Serial.println("Timer + AI NOT PRESENT → MISSED");
+        mqttClient.publish("YOUR_TOPIC_STATUS", ("MISSED," + String(currentSlot)).c_str());
+        missedCount++;
+        if (!cycleCompleted && (dispensedCount + missedCount >= MED_SLOTS)) {
+          cycleCompleted = true;
+        }
+      }
+      return;
+    }
+
+    // Send log only, no motor, no buzzer
+    String logMsg = "PRESENCE_" + msg;
+    mqttClient.publish("YOUR_TOPIC_STATUS", logMsg.c_str());
+
+    return;
+  }
 
   // ===== TIMER RECEIVED FROM DASHBOARD =====
-  if (String(topic) == TOPIC_SET_TIME) {
-
-    int hh = msg.substring(0, 2).toInt();
-int mm = msg.substring(3, 5).toInt();
-int ss = msg.substring(6, 8).toInt();
-
 schedHour = hh;
 schedMinute = mm;
 schedSecond = ss;
-
-// ---- SLOT ASSIGNMENT ----
-if (currentSlot < 7) {
-  currentSlot++;
-} else {
-  mqttClient.publish("dispenser/1/status", "LAST_SLOT_REACHED");
-  return;
-}
-
-// ---- ACK TO DASHBOARD ----
-char ackMsg[20];
 sprintf(ackMsg, "%d,%02d:%02d:%02d",
         currentSlot, schedHour, schedMinute, schedSecond);
 mqttClient.publish("dispenser/1/schedule_ack", ackMsg);
-
 scheduleActive = true;
+  if (String(topic) == TOPIC_SET_TIME) {
+
+    int hh = msg.substring(0, 2).toInt();
+    int mm = msg.substring(3, 5).toInt();
+    int ss = msg.substring(6, 8).toInt();
+
+    schedHour = hh;
+    schedMinute = mm;
+    schedSecond = ss;
+
+    // ---- SLOT ASSIGNMENT ----
+    if (currentSlot < 7) {
+      currentSlot++;
+    } else {
+      mqttClient.publish("YOUR_TOPIC_STATUS", "LAST_SLOT_REACHED");
+      return;
+    }
+
+    // ---- ACK TO DASHBOARD ----
+    char ackMsg[20];
+    sprintf(ackMsg, "%d,%02d:%02d:%02d",
+            currentSlot, schedHour, schedMinute, schedSecond);
+    mqttClient.publish("YOUR_TOPIC_SCHEDULE_ACK", ackMsg);
+
+    scheduleActive = true;
 
   }
 }
@@ -272,11 +285,12 @@ void connectMQTT() {
     if (mqttClient.connect("ESP32_Dispenser", MQTT_USER, MQTT_PASS)) {
       Serial.println("MQTT CONNECTED!");
 
+
       mqttClient.subscribe(TOPIC_AI_RESULT);
       mqttClient.subscribe(TOPIC_SET_TIME);
-      mqttClient.subscribe("dispenser/1/manual");
+      mqttClient.subscribe("YOUR_TOPIC_MANUAL");
 
-      mqttClient.publish("dispenser/1/status", "ONLINE");
+      mqttClient.publish("YOUR_TOPIC_STATUS", "ONLINE");
 
     } else {
       Serial.print("Failed. State=");
@@ -419,7 +433,7 @@ if (!lcdOverride) {
         homingPending = false;
 
         Serial.println("AUTO HOME: Returned to slot 0");
-        mqttClient.publish("dispenser/1/status", "HOME_RETURNED");
+        mqttClient.publish("YOUR_TOPIC_STATUS", "HOME_RETURNED");
     }
 }
   // ----------------------------
@@ -486,7 +500,7 @@ void printCycleSummary() {
                    String(dispensedCount) + "," +
                    String(missedCount);
 
-  mqttClient.publish("dispenser/1/cycle_summary", summary.c_str());
+  mqttClient.publish("YOUR_TOPIC_CYCLE_SUMMARY", summary.c_str());
 }
 
 
