@@ -224,9 +224,9 @@ h1{font-size:18px;margin:0}
         </div>
         <div class="card" style="padding:10px">
           <div class="muted">Connected device</div>
-          <div id="deviceName" style="font-weight:800">Dispenser_1</div>
+          <div id="deviceName" style="font-weight:800">Dispenser Name</div>
         </div>
-        <button id="themeToggle" class="small ghost">Light mode</button>
+        <button id="themeToggle" class="small ghost">Light Mode</button>
       </div>
     </div>
 
@@ -349,9 +349,11 @@ h1{font-size:18px;margin:0}
 
 /* ================= AUTO MQTT (STABLE) ================= */
 
-const MQTT_URL  = "wss://3fa72b5859424931862626cce0f36321.s1.eu.hivemq.cloud:8884/mqtt";
-const MQTT_USER = "caretaker";
-const MQTT_PASS = "Caretaker123";
+
+// Insert your MQTT broker settings below
+const MQTT_URL  = "YOUR_MQTT_BROKER_WSS_URL";
+const MQTT_USER = "YOUR_MQTT_USERNAME";
+const MQTT_PASS = "YOUR_MQTT_PASSWORD";
 
 let client = null;
 
@@ -381,14 +383,15 @@ function startMQTT(){
     connBadge.textContent = "Connected";
     connBadge.style.background = "green";
     addLog("MQTT connected (Wi-Fi)");
-    client.subscribe("dispenser/1/#");
+    // Insert your topic filter below
+    client.subscribe("YOUR_TOPIC_FILTER");
   });
 
 /* ================= MQTT HANDLER ================= */
 client.on("message", (topic, message) => {
   const msg = message.toString();
 
-  if (topic === "dispenser/1/status") {
+  if (topic === "YOUR_TOPIC_STATUS") {
 
   if (msg === "READY_FOR_NEW_CYCLE") {
   systemState.textContent = "READY";
@@ -519,7 +522,7 @@ if (msg.startsWith("PRESENCE_")) {
   }
 
   // Scheduler ACK from ESP32
-  if (topic === "dispenser/1/schedule_ack") {
+  if (topic === "YOUR_TOPIC_SCHEDULE_ACK") {
 
   const [slot, time] = msg.split(",");
 
@@ -540,13 +543,13 @@ if (msg.startsWith("PRESENCE_")) {
   return;
 }
 
-  if (topic === "dispenser/1/alerts" && msg === "ALARM_TRIGGERED") {
+  if (topic === "YOUR_TOPIC_ALERT" && msg === "ALARM_TRIGGERED") {
   systemState.textContent = "ALARM";
   }
 
   addLog(topic + " → " + msg);
 
-  if (topic === "dispenser/1/cycle_summary") {
+  if (topic === "YOUR_TOPIC_CYCLE_SUMMARY") {
   const [_, dispensed, missed] = msg.split(",");
 
   addNotification(
@@ -571,7 +574,7 @@ if (msg.startsWith("PRESENCE_")) {
   return;
 }
 
-if (topic === "dispenser/1/alerts") {
+if (topic === "YOUR_TOPIC_ALERT") {
   if (msg === "REFILL_SOON") {
     addNotification(
       "Refill Reminder",
@@ -632,14 +635,14 @@ div.innerHTML =
 /* ---------- BUTTONS ---------- */
 btnForce.onclick = () => {
   if (client) {
-    client.publish("dispenser/1/manual", "FORCE_DISPENSE");
+    client.publish("YOUR_TOPIC_MANUAL", "FORCE_DISPENSE");
     addLog("Manual force dispense sent");
   }
 };
 
 btnBuzzer.onclick = () => {
   if (client) {
-    client.publish("dispenser/1/alerts", "PRESENCE_CHECK");
+    client.publish("YOUR_TOPIC_ALERT", "PRESENCE_CHECK");
     addLog("Presence check requested");
   }
 };
@@ -704,7 +707,7 @@ btnSetTimer.onclick = () => {
   nextDose.textContent = t;
 
   if (client) {
-    client.publish("dispenser/1/set_time", t);
+    client.publish("YOUR_TOPIC_SET_TIME", t);
     addLog("Timer sent → " + t);
   }
 };
@@ -731,7 +734,7 @@ btnSetNow.onclick = () => {
   nextDose.textContent = t;
 
   if (client) {
-    client.publish("dispenser/1/set_time", t);
+    client.publish("YOUR_TOPIC_SET_TIME", t);
     addLog("Quick timer (+10s) → " + t);
   }
 };
