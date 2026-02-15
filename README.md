@@ -1,4 +1,4 @@
-# Drug Dispenser Project
+# Automated Drug Dispenser with Wi-Fi Based Caregiver Notification System
 
 This project is a smart drug dispenser system designed to automate and monitor the dispensing of medication. It consists of multiple modules and a dashboard for user interaction and monitoring.
 
