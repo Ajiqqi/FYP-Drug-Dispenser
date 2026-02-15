@@ -502,5 +502,3 @@ void printCycleSummary() {
 
   mqttClient.publish("YOUR_TOPIC_CYCLE_SUMMARY", summary.c_str());
 }
-
-

@@ -5,13 +5,14 @@ from deepface import DeepFace
 import pickle
 import time
 
-MQTT_BROKER = "3fa72b5859424931862626cce0f36321.s1.eu.hivemq.cloud"
-MQTT_PORT = 8883
-MQTT_USER = "caretaker"
-MQTT_PASS = "Caretaker123"
+MQTT_BROKER = "YOUR_MQTT_BROKER_URL"
+MQTT_PORT = 8883  # Change if needed
+MQTT_USER = "YOUR_MQTT_USERNAME"
+MQTT_PASS = "YOUR_MQTT_PASSWORD"
 
-TOPIC_ALERT = "dispenser/1/alerts"
-TOPIC_AI_RESULT = "dispenser/1/ai_result"
+# Insert your MQTT topics below (customize as needed)
+TOPIC_ALERT = "YOUR_TOPIC_ALERT"
+TOPIC_AI_RESULT = "YOUR_TOPIC_AI_RESULT"
 
 # ---------------------------
 # LOAD PATIENT EMBEDDING
@@ -25,7 +26,6 @@ face_cascade = cv2.CascadeClassifier(
 
 def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
 
 # ---------------------------
 # FACE DETECTION FUNCTION
@@ -41,7 +41,7 @@ def start_camera_and_detect():
 
     start_time = time.time()
     MIN_ACTIVE_TIME = 4.0          # Camera must stay open at least 2 sec
-    TOTAL_TIMEOUT  = 6.0          # Entire detection window
+    TOTAL_TIMEOUT  = 6.0           # Entire detection window
     stable_detect_frames = 0       # Need multiple good frames
     required_stable_frames = 3     # For stability
 
@@ -104,7 +104,6 @@ def start_camera_and_detect():
     print("Final result:", final_label)
     return final_label
 
-
 # ---------------------------
 # MQTT HANDLERS
 # ---------------------------
@@ -112,7 +111,6 @@ def on_connect(client, userdata, flags, rc):
     print("MQTT Connected:", rc)
     client.subscribe(TOPIC_ALERT)
     print("Listening for dispenser alerts...")
-
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode()
@@ -128,8 +126,6 @@ def on_message(client, userdata, msg):
         client.publish(TOPIC_AI_RESULT, result)
 
         print("Published AI result:", result)
-
-
 
 # ---------------------------
 # MQTT SETUP
